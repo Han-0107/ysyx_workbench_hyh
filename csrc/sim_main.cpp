@@ -21,6 +21,11 @@ Vnpc *top = new Vnpc;
 int status = 0;
 int breakflag = 0;
 
+// ********************************************Debug Tools******************************************** //
+// #define MTRACE_ON
+// #define ITRACE_ON
+// #define DIFFTEST_ON
+
 // ********************************************Devices******************************************** //
 // Defines
 #define DEVICE_BASE 0xa0000000
@@ -32,8 +37,8 @@ int breakflag = 0;
 // timer
 static uint64_t sec = 0;
 static uint64_t sec_start = 0;
-// ********************************************Functions******************************************** //
 
+// ********************************************Functions******************************************** //
 // Regs
 uint64_t *cpu_gpr = NULL;
 extern "C" void set_gpr_ptr(const svOpenArrayHandle r) {
@@ -49,10 +54,11 @@ void dump_gpr() {
 
 // Memory
 #define MEM_BASE 0x80000000
-#define MEM_SIZE 655360
+#define MEM_SIZE 0x30000000
 #define vaddr2paddr(addr) (pmem + addr - MEM_BASE)
 static uint8_t pmem[MEM_SIZE];
 uint8_t* cpu2mem(ll addr) { return pmem + (addr - MEM_BASE); }
+
 static uint64_t paddr_read(uint8_t *addr, int len) {
     switch (len) {
         case 1:
@@ -83,8 +89,13 @@ extern "C" void pmem_read(ll raddr, ll *rdata)
 
 extern "C" void pmem_read_l(ll raddr, ll *rdata)
 { 
+  #ifdef MTRACE_ON
+    printf("read addr: 0x%llx\n", raddr);
+  #endif
+
   // // timer
   // if(raddr == RTC_ADDR || raddr == RTC_ADDR + 4) {
+  //   printf("time!\n");
   //   struct timeval time_day;
   //   gettimeofday(&time_day, NULL);
   //   if(sec_start == 0) {
@@ -100,7 +111,7 @@ extern "C" void pmem_read_l(ll raddr, ll *rdata)
   //   }
   // }
 
-  if (raddr < MEM_BASE) 
+  if (raddr < MEM_BASE | raddr > MEM_BASE + MEM_SIZE) 
     return;
   uint8_t *pt = cpu2mem(raddr) + 7;
   ll ret = 0;
@@ -125,13 +136,15 @@ extern "C" void pmem_write(ll waddr, ll wdata, char mask)
 
 extern "C" void pmem_write_s(ll waddr, ll wdata, char mask)
 { 
-  // printf("write addr: 0x%llx\n", waddr);
-  // serila port
-  if(waddr == 0xa00003f8) {
-    printf("serila port!\n");
-  }
+  #ifdef MTRACE_ON
+    printf("write addr: 0x%llx\n", waddr);
+  #endif
 
-  if (waddr < MEM_BASE) 
+  // Serila port
+  if(waddr == SERIAL_PORT) {
+    putchar(wdata);
+  }
+  if (waddr < MEM_BASE | waddr > MEM_BASE + MEM_SIZE) 
     return;
   uint8_t *pt = cpu2mem(waddr);
   for (int i = 0; i < 8; i++) {
@@ -169,7 +182,7 @@ void load_image() {
 
 // Break by accident
 void ebreak() {
-    printf("ebreak!\n");
+    // printf("ebreak!\n");
     printf("\033[1;32mHIT GOOD TRAP\033[0m");
     printf(" at pc: 0x%08lx\n", top->pc);
     delete top;
@@ -209,7 +222,6 @@ void reset() {
 
 // ********************************************DIFFTEST******************************************** //
 // Definations about difftest
-#define DIFFTEST_ON
 #ifdef DIFFTEST_ON
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 void (*ref_difftest_memcpy)(uint32_t addr, void *buf, size_t n, bool direction) = NULL;
@@ -290,23 +302,25 @@ int main() {
     }
     #ifndef DIFFTEST_ON
     while(1) {
-        // top->inst = paddr_read(vaddr2paddr(top->pc), 8);
+      #ifdef ITRACE_ON
         printf("PC: 0x%lx    ", top->pc);
-        printf("INST: %08x\n", uint32_t(top->inst));
+        printf("INST: %08x\n", uint32_t(top->inst));      
+      #endif
         cpu_exec(1);
-        // sleep(1);
+      #ifdef ITRACE_ON
+        // dump_gpr(); 
+      #endif
         // dump_gpr();
     }
     #endif
+
     #ifdef DIFFTEST_ON
       init_difftest();
+      while(1) {
+          cpu_exec(1);
+          difftest_exec_once();
+          if(breakflag == 1) break;
+      }
     #endif
-    while(1) {
-        cpu_exec(1);
-      #ifdef DIFFTEST_ON
-        difftest_exec_once();
-        if(breakflag == 1) break;
-      #endif
-    }
     return status;
 }
