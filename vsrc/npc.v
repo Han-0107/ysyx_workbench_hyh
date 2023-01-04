@@ -2,7 +2,7 @@
 module npc (
     input wire clk,
     input wire rst,
-    output wire [63:0] inst,                // instructions from IM
+    output wire [63:0] inst,                // instructions from IM (for itrace)
     output wire [63:0] pc                   // valus of pc
 );
 

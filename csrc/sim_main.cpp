@@ -93,23 +93,23 @@ extern "C" void pmem_read_l(ll raddr, ll *rdata)
     printf("read addr: 0x%llx\n", raddr);
   #endif
 
-  // // timer
-  // if(raddr == RTC_ADDR || raddr == RTC_ADDR + 4) {
-  //   printf("time!\n");
-  //   struct timeval time_day;
-  //   gettimeofday(&time_day, NULL);
-  //   if(sec_start == 0) {
-  //     sec_start = time_day.tv_sec;
-  //   }
-  //   sec = time_day.tv_sec;
-  //   uint64_t rtc = time_day.tv_usec + 1000000 * sec;
-  //   if(raddr == RTC_ADDR) {
-  //     *rdata = (rtc & 0x0000000000000000ffffffffffffffffl);
-  //   }
-  //   else if(raddr == RTC_ADDR + 4) {
-  //     *rdata = (rtc >> 32);
-  //   }
-  // }
+  // Timer
+  if(raddr == RTC_ADDR || raddr == RTC_ADDR + 4){
+    struct timeval time_day;
+    gettimeofday(&time_day,NULL);
+    if(sec_start == 0){
+        sec_start = time_day.tv_sec;
+    }
+    sec = time_day.tv_sec - sec_start ;
+    unsigned long  rtc = time_day.tv_usec + 1000000 * sec;
+    if(raddr == RTC_ADDR){
+        *((__uint64_t *)rdata) = (rtc & 0x0000000000000000ffffffffffffffffl);
+    }
+    else if(raddr == RTC_ADDR + 4){
+        *((__uint64_t *)rdata) = (rtc>>32);
+    }
+    return;
+  }
 
   if (raddr < MEM_BASE | raddr > MEM_BASE + MEM_SIZE) 
     return;
@@ -158,10 +158,10 @@ extern "C" void pmem_write_s(ll waddr, ll wdata, char mask)
 uint64_t image_size = 0;
 
 void load_image_test() {
-    *(uint32_t*) (pmem)     = 0x00108013;      // addi      0x00108013
-    *(uint32_t*) (pmem + 4) = 0x00108013;      // ebreak    0x00100073
-    *(uint32_t*) (pmem + 8) = 0x00108013;      // ebreak    0x00100073
-    *(uint32_t*) (pmem + 12) = 0x00100073;      // ebreak    0x00100073
+    // *(uint32_t*) (pmem)     = 0x00108013;      // addi      0x00108013
+    // *(uint32_t*) (pmem + 4) = 0x00108013;      // ebreak    0x00100073
+    // *(uint32_t*) (pmem + 8) = 0x00108013;      // ebreak    0x00100073
+    // *(uint32_t*) (pmem + 12) = 0x00100073;      // ebreak    0x00100073
     // *(uint32_t*) (pmem + 16) = 0x00108013;      // ebreak    0x00100073
     // *(uint32_t*) (pmem + 20) = 0x00108013;      // ebreak    0x00100073
     // *(uint32_t*) (pmem + 24) = 0x00108013;      // ebreak    0x00100073
@@ -182,7 +182,6 @@ void load_image() {
 
 // Break by accident
 void ebreak() {
-    // printf("ebreak!\n");
     printf("\033[1;32mHIT GOOD TRAP\033[0m");
     printf(" at pc: 0x%08lx\n", top->pc);
     delete top;
@@ -190,14 +189,12 @@ void ebreak() {
 }
 
 void no_match() {
-    // if(top->inst != 00000000) {
       printf("No matched inst:        %08x\n", uint32_t(top->inst));
       printf("\033[1;31mHIT BAD TRAP\033[0m");
       printf(" at pc: 0x%08lx\n", top->pc); 
       status = 1;
       delete top;
       exit(0);
-    // }
 }
 
 // Execution of cpu
@@ -310,7 +307,6 @@ int main() {
       #ifdef ITRACE_ON
         // dump_gpr(); 
       #endif
-        // dump_gpr();
     }
     #endif
 

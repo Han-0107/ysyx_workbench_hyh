@@ -59,8 +59,11 @@ module EXU (
     wire [31:0] op1_movr64i_a_op3;
     wire [31:0] op1_movl64i_l_op3;
     wire [31:0] op1_movr64r_l_op2;
+    wire [63:0] op1_movl_l_op2;
+    wire [31:0] op1_divu_op2;
     wire signed [31:0] op1_h_temp;
     wire signed [63:0] op1_temp;
+    wire signed [31:0] op2_h_temp;
 
     assign reg_waddr_o = reg_waddr_i;
     assign op1_add_op2 = op1_i + op2_i;
@@ -72,8 +75,10 @@ module EXU (
     assign op1_ge_op2_unsigned = (op1_i >= op2_i);
     assign op1_div_op2 = op1_i[31:0] / op2_i[31:0];
     assign op1_rem_op2 = op1_i[31:0] % op2_i[31:0];
+    assign op1_divu_op2 = op1_h_temp / op2_h_temp;
 
     assign op1_h_temp = op1_i[31:0];
+    assign op2_h_temp = op2_i[31:0];
     assign op1_temp = op1_i;
     assign op1_movl_l_op3 = op1_i << op3_i[5:0];
     assign op1_movr_l_op3 = op1_i >> op3_i[5:0];
@@ -85,6 +90,7 @@ module EXU (
     assign op1_movr64r_l_op2 = op1_i[31:0] >> op2_i[4:0];
     assign op1_movl64r_l_op2 = op1_i[31:0] << op2_i[4:0];
     assign op1_movr64r_a_op2 = op1_h_temp >>> op2_i[4:0];
+    assign op1_movl_l_op2 = op1_i << op2_i[5:0];
 
     reg mem_wen;
     reg [7:0] mask;
@@ -132,6 +138,18 @@ module EXU (
                         end
                         3'b110: begin                           // or
                             reg_wdata_o = op1_i | op2_i;
+                            reg_we_o = reg_we_i;
+                            jump_flag_o = 0;
+                            jump_addr_o = 0;                            
+                        end
+                        3'b100: begin                           // xor
+                            reg_wdata_o = op1_i ^ op2_i;
+                            reg_we_o = reg_we_i;
+                            jump_flag_o = 0;
+                            jump_addr_o = 0;                              
+                        end
+                        3'b001: begin                           // sll
+                            reg_wdata_o = op1_movl_l_op2;
                             reg_we_o = reg_we_i;
                             jump_flag_o = 0;
                             jump_addr_o = 0;                            
@@ -231,6 +249,12 @@ module EXU (
                     jump_flag_o = 0;
                     jump_addr_o = 0;                    
                 end
+                3'b110: begin                               // ori
+                    reg_wdata_o = op1_i | op2_i;
+                    reg_we_o = reg_we_i;
+                    jump_flag_o = 0;
+                    jump_addr_o = 0;                     
+                end
                 default: begin
                     no_match();
                 end                  
@@ -268,6 +292,12 @@ module EXU (
                     reg_we_o = reg_we_i;
                     jump_flag_o = ~op1_ge_op2_unsigned;
                     jump_addr_o = {64{(~op1_ge_op2_unsigned)}} & op1_jump_add_op2_jump;                    
+                end
+                3'b111: begin                               // bgeu
+                    reg_wdata_o = 0;
+                    reg_we_o = reg_we_i;
+                    jump_flag_o = op1_ge_op2_unsigned;
+                    jump_addr_o = {64{(op1_ge_op2_unsigned)}} & op1_jump_add_op2_jump;                    
                 end
                 default: begin
                     no_match();
@@ -381,6 +411,12 @@ module EXU (
                             reg_we_o = reg_we_i;
                             reg_wdata_o = {{32{op1_rem_op2[31]}}, op1_rem_op2};                             
                         end
+                        3'b101: begin                       // divuw
+                            jump_flag_o = 1'b0;
+                            jump_addr_o = 0;
+                            reg_we_o = reg_we_i;
+                            reg_wdata_o = {{32{op1_divu_op2[31]}}, op1_divu_op2};                            
+                        end
                         default: begin
                             no_match();
                         end                           
@@ -491,6 +527,26 @@ module EXU (
                     reg_wdata_o = {56'b0, mem_rdata[7:0]};
                     jump_flag_o = 0;
                     jump_addr_o = 0;                       
+                end
+                3'b110: begin                               // lwu
+                    // mem_ren = 1'b1;
+                    mem_raddr = op1_add_op2;
+                    pmem_read_l(mem_raddr, mem_rdata);
+                    reg_waddr_o = reg_waddr_i;
+                    reg_we_o = reg_we_i;
+                    reg_wdata_o = {32'b0, mem_rdata[31:0]};
+                    jump_flag_o = 0;
+                    jump_addr_o = 0;                     
+                end
+                3'b000: begin
+                    // mem_ren = 1'b1;
+                    mem_raddr = op1_add_op2;
+                    pmem_read_l(mem_raddr, mem_rdata);
+                    reg_waddr_o = reg_waddr_i;
+                    reg_we_o = reg_we_i;
+                    reg_wdata_o = {{56{mem_rdata[7]}}, mem_rdata[7:0]};
+                    jump_flag_o = 0;
+                    jump_addr_o = 0;                     
                 end
                 default: begin
                     no_match();
