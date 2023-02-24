@@ -1,4 +1,4 @@
-# YueLu-rv64_sc
+# YueLu_riscv64
 A single cycle RISCV-64 core
 
 Computing **“Super Mario Bros”** game
