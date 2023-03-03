@@ -1,5 +1,5 @@
 # YueLu_riscv64
-A single cycle RISCV-64 core
+A single cycle RISCV64 core
 
 Computing **“Super Mario Bros”** game
 ![mario](https://user-images.githubusercontent.com/105989683/210528663-1bb8235b-be5b-4418-b646-71bbd1aecfe8.png)
