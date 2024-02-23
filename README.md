@@ -4,7 +4,7 @@
 ```bash
 bash init.sh subproject-name
 ```
-进行初始化, 具体请参考[实验讲义][lecture note].
+进行初始化, 具体请参考[一生一芯](https://ysyx.oscc.cc/docs/)课程网站
 
 # 成功运行的项目
 
