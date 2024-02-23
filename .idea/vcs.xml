@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/abstract-machine" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/am-kernels" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fceux-am" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/navy-apps/apps/bird/repo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/navy-apps/apps/pal/repo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/navy-apps/libs/libc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/npc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/nvboard" vcs="Git" />
+  </component>
+</project>
