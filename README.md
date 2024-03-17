@@ -8,7 +8,7 @@ bash init.sh subproject-name
 
 # 成功运行的项目
 
-### NEMU运行仙剑奇侠传
+### NEMU运行仙剑奇侠传（PAL）
 
 ![Screenshot from 2023-04-11 14-16-13](https://github.com/Han-0107/ysyx_workbench_hyh/assets/105989683/4fb4e267-6bbd-44b7-8869-da332ff71193)
 ### NEMU运行Flappy Bird
